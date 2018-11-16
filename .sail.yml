@@ -1,0 +1,25 @@
+tasks:
+  anchore:
+    dependencies:
+      postgres:
+        image: anchore/engine-db-preload:v0.3.0
+        env:
+          - POSTGRES_PASSWORD: pass
+        ports: 
+          - 5432
+      engine:
+        image: sailci/anchore-engine:v0.3.0
+        env:
+          - ANCHORE_DB_HOST: $(SAIL_HOST_POSTGRES)
+          - ANCHORE_DB_PASSWORD: pass
+          - ANCHORE_ENDPOINT_HOSTNAME: $(SAIL_HOST_ENGINE)
+        ports:
+          - 8228
+    image: anchore/engine-cli:v0.3.0
+    env:
+      - ANCHORE_CLI_URL: http://$(SAIL_HOST_ENGINE):8228/v1/
+    command:
+      - sh
+      - -c
+    args:
+      - sleep 30 && anchore-cli image add debian && anchore-cli image wait debian && anchore-cli image vuln debian all && anchore-cli evaluate check debian
